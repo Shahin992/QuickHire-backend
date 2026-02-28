@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+let connectionPromise;
+
 const buildMongoUri = () => {
     if (process.env.DB_URI) {
         return process.env.DB_URI;
@@ -23,24 +25,36 @@ const buildMongoUri = () => {
 };
 
 const connectDB = async () => {
-    try {
-        mongoose.set('strictPopulate', false);
-        mongoose.set('autoIndex', true);
-        mongoose.set('bufferCommands', false);
+    if (mongoose.connection.readyState === 1) {
+        return mongoose.connection;
+    }
 
-        const uri = buildMongoUri();
+    if (connectionPromise) {
+        return connectionPromise;
+    }
 
-        const conn = await mongoose.connect(uri, {
+    mongoose.set('strictPopulate', false);
+    mongoose.set('autoIndex', true);
+    mongoose.set('bufferCommands', false);
+
+    const uri = buildMongoUri();
+
+    connectionPromise = mongoose
+        .connect(uri, {
             serverSelectionTimeoutMS: Number(process.env.DB_SERVER_SELECTION_TIMEOUT_MS || 10000),
             connectTimeoutMS: Number(process.env.DB_CONNECT_TIMEOUT_MS || 10000),
             socketTimeoutMS: Number(process.env.DB_SOCKET_TIMEOUT_MS || 20000),
+        })
+        .then((conn) => {
+            console.log(`MongoDB Connected: ${conn.connection.name}`);
+            return conn.connection;
+        })
+        .catch((error) => {
+            connectionPromise = null;
+            throw error;
         });
 
-        console.log(`MongoDB Connected: ${conn.connection.name}`);
-    } catch (error) {
-        console.error(`Error: ${error.message}`);
-        process.exit(1);
-    }
+    return connectionPromise;
 };
 
 module.exports = connectDB;
