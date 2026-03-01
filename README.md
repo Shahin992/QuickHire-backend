@@ -33,6 +33,7 @@ Backend API for the QuickHire job portal. This service provides:
 
 - Node.js
 - Express.js
+- TypeScript
 - MongoDB with Mongoose
 - JWT authentication
 
@@ -77,6 +78,12 @@ Development mode:
 
 ```bash
 npm run dev
+```
+
+Build:
+
+```bash
+npm run build
 ```
 
 Production mode:
@@ -233,4 +240,4 @@ Example body:
 ## Notes
 
 - If `JWT_SECRET` is not set, the app falls back to a default secret. Setting your own secret is strongly recommended.
-- The `package.json` script `npm run data:import` points to `src/utils/seeder.js`, but that file is not present in this repository.
+- The backend source now lives in `src/**/*.ts` and compiles to `dist/` with `npm run build`.
